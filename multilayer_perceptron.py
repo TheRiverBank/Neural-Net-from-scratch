@@ -68,16 +68,21 @@ class MultilayerPerceptronClassifier():
                             delta_prev = self.deltas[r+1][i][prev_k]
                             summa += w_prev_layer * delta_prev
                         self.deltas[r][i][k] = delta*summa
-
+        #print(self.deltas[2])
+        #quit()
 
     def update_weights(self, lr=0.02):
         for r in range(1, self.L):
-            for j in range(self.net_shape[r]-1):
-                dr = np.tile(self.deltas[r][:, j], len(self.net_outf[r-1]))
-                df = np.c_[self.net_outf[r-1], np.ones(len(self.net_outf[r-1]))]
-                summation = np.sum((self.net_outf[r-1], np.c_[self.deltas[r][:, j], np.ones(len(self.deltas[r][:, j]))]))
-                self.weights[r][j] -= lr * summation
+            for j in range(0, self.net_shape[r]):
+                dy_sum = 0
+                #print(self.net_outf[r-1])
+                for i in range(self.N):
+                    d_rji = self.deltas[r][:, j][i]
+                    y_ri = self.net_outf[r-1][i]
+                    dy_sum += d_rji * y_ri
+                diff = lr * dy_sum
                 
+                self.weights[r-1][j] = self.weights[r-1][j] - np.append(diff, 1)
     
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
