@@ -15,7 +15,7 @@ def get_data(N):
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
 
-    y1 = np.ones(len(x1_1) + len(x1_2)) * -1
+    y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
 
     X = np.concatenate((x1_1, x1_2, x2_1, x2_2))
@@ -54,10 +54,13 @@ if __name__ == '__main__':
     X, y = get_data(100)
     mlp = MLP(0.01, X, y)
 
-    mlp.train()
+    mlp.train(10)
     #plot_boundaries(mlp, X)
-    preds = mlp.predict(X)
-    print(preds[1])
+    w = mlp.weights
+    print(w)
+    #preds = mlp.predict(X)
+    #print(np.array(preds))
+
 
 
 
