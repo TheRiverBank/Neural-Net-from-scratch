@@ -16,31 +16,8 @@ class MultilayerPerceptronClassifier():
         self.net_outf = self.init_input_vectors()
         self.net_outv = self.init_neuron_outputs()
         self.deltas = self.init_deltas()
-
-    def train(self, lr, a, epochs=10):
-        min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
-        min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
-        # define the x and y scale
-        x1grid = np.arange(min1, max1, 0.1)
-        x2grid = np.arange(min2, max2, 0.1)
-        # create all of the lines and rows of the grid
-        xx, yy = np.meshgrid(x1grid, x2grid)
-
-        # flatten each grid to a vector
-        r1, r2 = xx.flatten(), yy.flatten()
-        r1, r2 = r1.reshape((len(r1), 1)), r2.reshape((len(r2), 1))
-        # horizontal stack vectors to create x1,x2 input for the model
-        grid = np.hstack((r1, r2))
-        for e in range(epochs):
-            self.forward_pass()
-            self.backpropagation()
-            self.update_weights(lr, a)
-            cost = self.print_cost()
-            print(cost, e)
-            #self.plot_updates(xx, yy, grid, e, cost)
-
-        #plt.show()
-
+        self.prev_cost = None
+         
     def predict(self, X):
         # Just predicts traning data r.now
         out = [np.ones((len(X), self.net_shape[r])) for r in range(len(self.net_shape))]
@@ -54,9 +31,24 @@ class MultilayerPerceptronClassifier():
                     neuron_out = w[:-1].T.dot(out[r - 1][i]) + w[-1]
                     v[k] = neuron_out
                 v_f = list(map(self.activation, v[:-1]))
-                out[r][i] = v_f
+                out[r][i] = v_f<
             preds.append(v_f)  # Last v_f is the output of the last neurons
         return preds
+
+    def train(self, lr, a, epochs=10):
+        for e in range(epochs):
+            self.forward_pass()
+            self.backpropagation()
+            self.update_weights(lr, a)
+            cost = self.print_cost()
+            """ if self.prev_cost is None:
+                self.prev_cost = cost
+            elif self.prev_cost - cost == 0 or cost > self.prev_cost:
+                break
+            else:
+                self.prev_cost = cost """
+            print(cost, e)
+
 
     def forward_pass(self):
         for i in range(self.N):
@@ -82,15 +74,26 @@ class MultilayerPerceptronClassifier():
                         self.deltas[r - 1][i][j] = delta
                     else:
                         delta = self.net_outf[r][i][j] * (1 - self.net_outf[r][i][j])
-                        summa = 0
+                        prev_sum = 0
                         for prev_k in range(self.net_shape[r + 1]):
                             w_prev_layer = self.get_weight(r + 1, prev_k, j)
                             delta_prev = self.deltas[r][i][prev_k]
-                            summa += w_prev_layer * delta_prev
-                        self.deltas[r - 1][i][j] = delta * summa
+                            prev_sum += w_prev_layer * delta_prev
+                        self.deltas[r - 1][i][j] = delta * prev_sum
+
+    def update_weights(self, lr, a):
+        """ Gradient decent with momentum """
+        for r in range(0, self.L - 1):
+            for j in range(0, self.net_shape[r + 1]):
+                delta = self.deltas[r][:, j]
+                outputs = self.net_outf[r - 1]
+                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta * outputs)
+                self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
+                self.weights[r][j] = self.weights[r][j] + w_change
 
     def print_cost(self):
-        cost = np.sum((self.y - self.net_outf[2]) ** 2) * 0.5
+        cost = ((np.sum(self.net_outf[2]) - np.sum(self.y)) ** 2) * 0.5
+
         return cost
 
     def plot_updates(self, xx, yy, grid, epoch, cost):
@@ -138,7 +141,8 @@ class MultilayerPerceptronClassifier():
         w = [[] * 1 for r in self.net_shape[1:]]
         for r in range(len(self.net_shape[1:])):  # For each layer in the net
             for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
-                w[r].append(np.append(np.random.normal(0, 1, 2), 1))
+                w[r].append(np.append(np.random.normal(0, 0.5, 2), 1))
+
         return w
 
     def init_prev_weights(self):
@@ -178,9 +182,9 @@ class MultilayerPerceptronClassifier():
 def get_data(N):
     cov = np.array([[0.01, 0.0], [0.0, 0.01]])
     m1_1 = np.array([0, 0])
-    m1_2 = np.array([1.5, 1.5])
-    m2_1 = np.array([0, 1.5])
-    m2_2 = np.array([1.5, 0])
+    m1_2 = np.array([1, 1])
+    m2_1 = np.array([0, 1])
+    m2_2 = np.array([1, 0])
 
     x1_1 = np.random.multivariate_normal(m1_1, cov, N)
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
@@ -205,8 +209,8 @@ def plot_boundaries(model, X):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
     # define the x and y scale
-    x1grid = np.arange(min1, max1, 0.1)
-    x2grid = np.arange(min2, max2, 0.1)
+    x1grid = np.arange(min1, max1, 0.01)
+    x2grid = np.arange(min2, max2, 0.01)
     # create all of the lines and rows of the grid
     xx, yy = np.meshgrid(x1grid, x2grid)
 
@@ -218,15 +222,15 @@ def plot_boundaries(model, X):
 
     yhat = np.array(model.predict(grid))
 
-    # print(yhat)
     yhat = np.array([round(x[0]) for x in yhat])
-    #print(yhat)
-    #print(yhat.shape, X[:, 0].shape)
+
     zz = yhat.reshape(xx.shape)
 
     plt.contourf(xx, yy, zz, cmap="Paired")
-    plt.scatter(X[:, 0], X[:, 1], c='b')
 
+    
+    plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
+    plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
     plt.show()
     plt.savefig("Contour3.png")
 
@@ -249,20 +253,20 @@ def plot_decision_lines(model, X):
 
 
 if __name__ == "__main__":
-    X, y = get_data(200)
+    X, y = get_data(1000)
     # X = np.c_[X, np.ones(len(X))]
     # y = np.c_[y, np.ones(len(y))]
     mlp = MultilayerPerceptronClassifier(X, y)
-    mlp.train(lr=0.01, a=0.3, epochs=3000)
+    mlp.train(lr=0.0001, a=0.2, epochs=100)
     w = mlp.weights
-    print(sum(w, []))
+    ([print(x) for x in sum(w, [])])
 
     preds = np.array(mlp.predict(X))
     y_hat = [round(x[0]) for x in preds]
     
     print(np.sum(y==y_hat)/len(preds))
-    for i in range(len(preds)):
-       print(round(preds[i][0]), y[i])
+    #for i in range(len(preds)):
+    #   print(round(preds[i][0]), y[i])
 
     #plot_decision_lines(mlp, X)
     plot_boundaries(mlp, X)

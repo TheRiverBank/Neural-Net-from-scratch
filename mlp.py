@@ -21,9 +21,6 @@ class MLP():
             deltas = self.back_propagate(y_hat)
             self.update_weights(deltas, y_hat)
 
- 
-
-
     def forward_pass(self, X):
         """
         Forward pass through the network.
