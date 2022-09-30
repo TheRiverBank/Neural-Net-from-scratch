@@ -31,16 +31,28 @@ class MultilayerPerceptronClassifier():
                     neuron_out = w[:-1].T.dot(out[r - 1][i]) + w[-1]
                     v[k] = neuron_out
                 v_f = list(map(self.activation, v[:-1]))
-                out[r][i] = v_f<
+                out[r][i] = v_f
             preds.append(v_f)  # Last v_f is the output of the last neurons
         return preds
 
     def train(self, lr, a, epochs=10):
         for e in range(epochs):
+            """ for i in self.weights:
+                print(i)
+            print(np.shape(self.weights))
+            print() """
             self.forward_pass()
             self.backpropagation()
             self.update_weights(lr, a)
             cost = self.print_cost()
+            """ for i in self.deltas:
+                print(i)
+            print()
+            
+            for i in self.weights:
+                print(i)
+            print(np.shape(self.weights))
+            quit() """
             """ if self.prev_cost is None:
                 self.prev_cost = cost
             elif self.prev_cost - cost == 0 or cost > self.prev_cost:
@@ -53,14 +65,14 @@ class MultilayerPerceptronClassifier():
     def forward_pass(self):
         for i in range(self.N):
             for r in range(1, self.L):
-                v = np.append(np.zeros(self.net_shape[r]), 1)  # Create vector to hold neuron outputs + 1 for extended
+                v = np.zeros(self.net_shape[r])  # Create vector to hold neuron outputs + 1 for extended
                 for k in range(self.net_shape[r]):
                     w = self.get_weight(r, k)
                     neuron_out = w[:-1].T.dot(self.net_outf[r - 1][i]) + w[-1]
                     v[k] = neuron_out
-                v_f = list(map(self.activation, v[:-1]))
+                v_f = list(map(self.activation, v))
 
-                self.net_outv[r][i] = v[:-1]  # Store the acutal output.
+                self.net_outv[r][i] = v  # Store the acutal output.
                 self.net_outf[r][i] = v_f  # Store ativation output of neurons, they are the next layer inputs.
 
     def backpropagation(self):
@@ -92,9 +104,12 @@ class MultilayerPerceptronClassifier():
                 self.weights[r][j] = self.weights[r][j] + w_change
 
     def print_cost(self):
-        cost = ((np.sum(self.net_outf[2]) - np.sum(self.y)) ** 2) * 0.5
+        cost = 0
+        for i in range(self.N):
+            cost += (self.net_outf[2][i] - self.y[i]) ** 2
+        cost * 0.5
 
-        return cost
+        return cost[0]
 
     def plot_updates(self, xx, yy, grid, epoch, cost):
         yhat = np.array(self.predict(grid))
@@ -141,7 +156,7 @@ class MultilayerPerceptronClassifier():
         w = [[] * 1 for r in self.net_shape[1:]]
         for r in range(len(self.net_shape[1:])):  # For each layer in the net
             for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
-                w[r].append(np.append(np.random.normal(0, 0.5, 2), 1))
+                w[r].append(np.random.normal(0, 0.5, 3))
 
         return w
 
@@ -239,8 +254,8 @@ def plot_decision_lines(model, X):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
     # define the x and y scale
-    x1grid = np.arange(min1, max1, 0.01)
-    x2grid = np.arange(min2, max2, 0.01)
+    x1grid = np.arange(min1, max1, 0.1)
+    x2grid = np.arange(min2, max2, 0.1)
     # create all of the lines and rows of the grid
     xx, _ = np.meshgrid(x1grid, x2grid)
     weights = []
@@ -253,11 +268,11 @@ def plot_decision_lines(model, X):
 
 
 if __name__ == "__main__":
-    X, y = get_data(1000)
+    X, y = get_data(200)
     # X = np.c_[X, np.ones(len(X))]
     # y = np.c_[y, np.ones(len(y))]
     mlp = MultilayerPerceptronClassifier(X, y)
-    mlp.train(lr=0.0001, a=0.2, epochs=100)
+    mlp.train(lr=0.02, a=0.5, epochs=2000)
     w = mlp.weights
     ([print(x) for x in sum(w, [])])
 
