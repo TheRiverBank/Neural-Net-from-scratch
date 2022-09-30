@@ -3,5 +3,6 @@
 ## Xor problem
 ![alt text](https://github.com/TheRiverBank/Neural-Net-from-scratch/blob/main/data.png)
 
-## Neural network solution:
+### Neural network solution
+Solution found by (2, 2, 1) layer network:
 ![alt text](https://github.com/TheRiverBank/Neural-Net-from-scratch/blob/main/Contour2.png)
