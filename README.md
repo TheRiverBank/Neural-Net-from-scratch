@@ -1,6 +1,6 @@
 # Neural-Net-from-scratch
 
-## Xor problem
+## XOR problem
 ![alt text](https://github.com/TheRiverBank/Neural-Net-from-scratch/blob/main/data.png)
 
 ### Neural network solution
