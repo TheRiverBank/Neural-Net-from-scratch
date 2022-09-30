@@ -31,7 +31,7 @@ class MultilayerPerceptronClassifier():
                     neuron_out = w[:-1].T.dot(out[r - 1][i]) + w[-1]
                     v[k] = neuron_out
                 v_f = list(map(self.activation, v[:-1]))
-                out[r][i] = v_f<
+                out[r][i] = v_f
             preds.append(v_f)  # Last v_f is the output of the last neurons
         return preds
 
@@ -41,14 +41,7 @@ class MultilayerPerceptronClassifier():
             self.backpropagation()
             self.update_weights(lr, a)
             cost = self.print_cost()
-            """ if self.prev_cost is None:
-                self.prev_cost = cost
-            elif self.prev_cost - cost == 0 or cost > self.prev_cost:
-                break
-            else:
-                self.prev_cost = cost """
             print(cost, e)
-
 
     def forward_pass(self):
         for i in range(self.N):
@@ -109,16 +102,6 @@ class MultilayerPerceptronClassifier():
         plt.pause(0.0001)
         plt.clf()
         plt.plot()
-
-    def update_weights(self, lr, a):
-        """ Gradient decent with momentum """
-        for r in range(0, self.L - 1):
-            for j in range(0, self.net_shape[r + 1]):
-                delta = self.deltas[r][:, j]
-                outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
-                self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] = self.weights[r][j] + w_change
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -190,12 +173,12 @@ def get_data(N):
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
+    x1 = np.concatenate((x1_1,x1_2))
+    x2 = np.concatenate((x2_1, x2_2))
+    plt.scatter(x1[:, 0], x1[:, 1], c='b')
+    plt.scatter(x2[:, 0], x2[:, 1], c='r')
+    plt.savefig("data.png")
 
-    """ x1_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x1_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    """
     y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
 
@@ -235,27 +218,9 @@ def plot_boundaries(model, X):
     plt.savefig("Contour3.png")
 
 
-def plot_decision_lines(model, X):
-    min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
-    min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
-    # define the x and y scale
-    x1grid = np.arange(min1, max1, 0.01)
-    x2grid = np.arange(min2, max2, 0.01)
-    # create all of the lines and rows of the grid
-    xx, _ = np.meshgrid(x1grid, x2grid)
-    weights = []
-    plt.scatter(X[:, 0], X[:, 1])
-    for w in sum(model.weights, []):
-        # print(w)
-        yy = (-(w[0] * xx) - w[2]) / w[1]
-        plt.plot(xx, yy)
-    plt.savefig("lines.png")
-
-
 if __name__ == "__main__":
     X, y = get_data(1000)
-    # X = np.c_[X, np.ones(len(X))]
-    # y = np.c_[y, np.ones(len(y))]
+
     mlp = MultilayerPerceptronClassifier(X, y)
     mlp.train(lr=0.0001, a=0.2, epochs=100)
     w = mlp.weights
@@ -265,10 +230,7 @@ if __name__ == "__main__":
     y_hat = [round(x[0]) for x in preds]
     
     print(np.sum(y==y_hat)/len(preds))
-    #for i in range(len(preds)):
-    #   print(round(preds[i][0]), y[i])
 
-    #plot_decision_lines(mlp, X)
     plot_boundaries(mlp, X)
 
 
