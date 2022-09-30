@@ -173,11 +173,14 @@ def get_data(N):
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
+
+    """
     x1 = np.concatenate((x1_1,x1_2))
     x2 = np.concatenate((x2_1, x2_2))
     plt.scatter(x1[:, 0], x1[:, 1], c='b')
     plt.scatter(x2[:, 0], x2[:, 1], c='r')
     plt.savefig("data.png")
+    """
 
     y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
@@ -202,15 +205,10 @@ def plot_boundaries(model, X):
     r1, r2 = r1.reshape((len(r1), 1)), r2.reshape((len(r2), 1))
     # horizontal stack vectors to create x1,x2 input for the model
     grid = np.hstack((r1, r2))
-
     yhat = np.array(model.predict(grid))
-
     yhat = np.array([round(x[0]) for x in yhat])
-
     zz = yhat.reshape(xx.shape)
-
     plt.contourf(xx, yy, zz, cmap="Paired")
-
     
     plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
     plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
