@@ -1,7 +1,7 @@
 # Neural-Net-from-scratch
 
 ## XOR problem
-Cannot be solved using a single linear discriminatoe.
+Cannot be solved using a single linear discriminator.
 ![alt text](https://github.com/TheRiverBank/Neural-Net-from-scratch/blob/main/data.png)
 
 ### Neural network solution
