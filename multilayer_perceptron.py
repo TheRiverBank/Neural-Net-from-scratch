@@ -19,7 +19,6 @@ class MultilayerPerceptronClassifier():
         self.prev_cost = None
          
     def predict(self, X):
-        # Just predicts traning data r.now
         out = [np.ones((len(X), self.net_shape[r])) for r in range(len(self.net_shape))]
         out[0] = X
         preds = []
@@ -37,28 +36,10 @@ class MultilayerPerceptronClassifier():
 
     def train(self, lr, a, epochs=10):
         for e in range(epochs):
-            """ for i in self.weights:
-                print(i)
-            print(np.shape(self.weights))
-            print() """
             self.forward_pass()
             self.backpropagation()
             self.update_weights(lr, a)
             cost = self.print_cost()
-            """ for i in self.deltas:
-                print(i)
-            print()
-            
-            for i in self.weights:
-                print(i)
-            print(np.shape(self.weights))
-            quit() """
-            """ if self.prev_cost is None:
-                self.prev_cost = cost
-            elif self.prev_cost - cost == 0 or cost > self.prev_cost:
-                break
-            else:
-                self.prev_cost = cost """
             print(cost, e)
 
 
@@ -114,7 +95,6 @@ class MultilayerPerceptronClassifier():
     def plot_updates(self, xx, yy, grid, epoch, cost):
         yhat = np.array(self.predict(grid))
 
-        # print(yhat)
         yhat = np.array([round(x[0]) for x in yhat])
 
         zz = yhat.reshape(xx.shape)
@@ -180,7 +160,6 @@ class MultilayerPerceptronClassifier():
 
     def init_deltas(self):
         # [r][i][k]
-        # List of numpy arrays to hold deltas. Reverse it because it is in the wrong order for some reason.
         return [np.ones((self.N, r)) for r in self.net_shape[1:]]
 
 
@@ -196,11 +175,6 @@ def get_data(N):
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
 
-    """ x1_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x1_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    """
     y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
 
@@ -240,27 +214,8 @@ def plot_boundaries(model, X):
     plt.savefig("Contour3.png")
 
 
-def plot_decision_lines(model, X):
-    min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
-    min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
-    # define the x and y scale
-    x1grid = np.arange(min1, max1, 0.1)
-    x2grid = np.arange(min2, max2, 0.1)
-    # create all of the lines and rows of the grid
-    xx, _ = np.meshgrid(x1grid, x2grid)
-    weights = []
-    plt.scatter(X[:, 0], X[:, 1])
-    for w in sum(model.weights, []):
-        # print(w)
-        yy = (-(w[0] * xx) - w[2]) / w[1]
-        plt.plot(xx, yy)
-    plt.savefig("lines.png")
-
-
 if __name__ == "__main__":
     X, y = get_data(1000)
-    # X = np.c_[X, np.ones(len(X))]
-    # y = np.c_[y, np.ones(len(y))]
     mlp = MultilayerPerceptronClassifier(X, y)
     mlp.train(lr=0.01, a=0.5, epochs=2000)
     w = mlp.weights
@@ -270,10 +225,6 @@ if __name__ == "__main__":
     y_hat = [round(x[0]) for x in preds]
     
     print(np.sum(y==y_hat)/len(preds))
-    #for i in range(len(preds)):
-    #   print(round(preds[i][0]), y[i])
-
-    #plot_decision_lines(mlp, X)
     plot_boundaries(mlp, X)
 
 
