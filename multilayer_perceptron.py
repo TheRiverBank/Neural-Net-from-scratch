@@ -19,7 +19,6 @@ class MultilayerPerceptronClassifier():
         self.prev_cost = None
          
     def predict(self, X):
-        # Just predicts traning data r.now
         out = [np.ones((len(X), self.net_shape[r])) for r in range(len(self.net_shape))]
         out[0] = X
         preds = []
@@ -37,31 +36,10 @@ class MultilayerPerceptronClassifier():
 
     def train(self, lr, a, epochs=10):
         for e in range(epochs):
-            """ for i in self.weights:
-                print(i)
-            print(np.shape(self.weights))
-            print() """
             self.forward_pass()
             self.backpropagation()
             self.update_weights(lr, a)
             cost = self.print_cost()
-<<<<<<< HEAD
-            """ for i in self.deltas:
-                print(i)
-            print()
-            
-            for i in self.weights:
-                print(i)
-            print(np.shape(self.weights))
-            quit() """
-            """ if self.prev_cost is None:
-                self.prev_cost = cost
-            elif self.prev_cost - cost == 0 or cost > self.prev_cost:
-                break
-            else:
-                self.prev_cost = cost """
-=======
->>>>>>> f0bfe7f66fb412b4910938fa719d40774975fe9e
             print(cost, e)
 
     def forward_pass(self):
@@ -101,9 +79,9 @@ class MultilayerPerceptronClassifier():
             for j in range(0, self.net_shape[r + 1]):
                 delta = self.deltas[r][:, j]
                 outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta * outputs)
+                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
                 self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] = self.weights[r][j] + w_change
+                self.weights[r][j] += w_change
 
     def print_cost(self):
         cost = 0
@@ -168,13 +146,9 @@ class MultilayerPerceptronClassifier():
 
     def init_input_vectors(self):
         # [r][i][k]
-
-        # Dont think this works for more layers
-        # For 2 2 1 this creates 2 3 3
         out = [np.ones((self.N, self.net_shape[r])) for r in range(len(self.net_shape))]
         out[0] = self.X
-        # print(out[2][0])
-        # quit()
+
         return out
 
     def init_neuron_outputs(self):
@@ -182,7 +156,6 @@ class MultilayerPerceptronClassifier():
 
     def init_deltas(self):
         # [r][i][k]
-        # List of numpy arrays to hold deltas. Reverse it because it is in the wrong order for some reason.
         return [np.ones((self.N, r)) for r in self.net_shape[1:]]
 
 
@@ -197,14 +170,6 @@ def get_data(N):
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
-
-    """
-    x1 = np.concatenate((x1_1,x1_2))
-    x2 = np.concatenate((x2_1, x2_2))
-    plt.scatter(x1[:, 0], x1[:, 1], c='b')
-    plt.scatter(x2[:, 0], x2[:, 1], c='r')
-    plt.savefig("data.png")
-    """
 
     y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
@@ -240,35 +205,11 @@ def plot_boundaries(model, X):
     plt.savefig("Contour3.png")
 
 
-<<<<<<< HEAD
-def plot_decision_lines(model, X):
-    min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
-    min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
-    # define the x and y scale
-    x1grid = np.arange(min1, max1, 0.1)
-    x2grid = np.arange(min2, max2, 0.1)
-    # create all of the lines and rows of the grid
-    xx, _ = np.meshgrid(x1grid, x2grid)
-    weights = []
-    plt.scatter(X[:, 0], X[:, 1])
-    for w in sum(model.weights, []):
-        # print(w)
-        yy = (-(w[0] * xx) - w[2]) / w[1]
-        plt.plot(xx, yy)
-    plt.savefig("lines.png")
-
-
-if __name__ == "__main__":
-    X, y = get_data(200)
-    # X = np.c_[X, np.ones(len(X))]
-    # y = np.c_[y, np.ones(len(y))]
-=======
 if __name__ == "__main__":
     X, y = get_data(1000)
 
->>>>>>> f0bfe7f66fb412b4910938fa719d40774975fe9e
     mlp = MultilayerPerceptronClassifier(X, y)
-    mlp.train(lr=0.02, a=0.5, epochs=2000)
+    mlp.train(lr=0.01, a=0.5, epochs=2000)
     w = mlp.weights
     ([print(x) for x in sum(w, [])])
 
