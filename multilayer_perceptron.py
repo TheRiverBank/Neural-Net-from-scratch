@@ -125,16 +125,6 @@ class MultilayerPerceptronClassifier():
         plt.clf()
         plt.plot()
 
-    def update_weights(self, lr, a):
-        """ Gradient decent with momentum """
-        for r in range(0, self.L - 1):
-            for j in range(0, self.net_shape[r + 1]):
-                delta = self.deltas[r][:, j]
-                outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
-                self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] = self.weights[r][j] + w_change
-
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
             res = 1 / (1 + np.exp(-x))
@@ -268,11 +258,11 @@ def plot_decision_lines(model, X):
 
 
 if __name__ == "__main__":
-    X, y = get_data(200)
+    X, y = get_data(1000)
     # X = np.c_[X, np.ones(len(X))]
     # y = np.c_[y, np.ones(len(y))]
     mlp = MultilayerPerceptronClassifier(X, y)
-    mlp.train(lr=0.02, a=0.5, epochs=2000)
+    mlp.train(lr=0.01, a=0.5, epochs=2000)
     w = mlp.weights
     ([print(x) for x in sum(w, [])])
 
