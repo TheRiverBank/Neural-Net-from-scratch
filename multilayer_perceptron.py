@@ -36,6 +36,7 @@ class MultilayerPerceptronClassifier():
 
     def train(self, lr, a, epochs=10):
         for e in range(epochs):
+
             self.forward_pass()
             self.backpropagation()
             self.update_weights(lr, a)
@@ -80,9 +81,9 @@ class MultilayerPerceptronClassifier():
             for j in range(0, self.net_shape[r + 1]):
                 delta = self.deltas[r][:, j]
                 outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta * outputs)
+                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
                 self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] = self.weights[r][j] + w_change
+                self.weights[r][j] += w_change
 
     def print_cost(self):
         cost = 0
@@ -95,6 +96,7 @@ class MultilayerPerceptronClassifier():
     def plot_updates(self, xx, yy, grid, epoch, cost):
         yhat = np.array(self.predict(grid))
 
+        # print(yhat)
         yhat = np.array([round(x[0]) for x in yhat])
 
         zz = yhat.reshape(xx.shape)
@@ -104,6 +106,7 @@ class MultilayerPerceptronClassifier():
         plt.pause(0.0001)
         plt.clf()
         plt.plot()
+
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -146,13 +149,9 @@ class MultilayerPerceptronClassifier():
 
     def init_input_vectors(self):
         # [r][i][k]
-
-        # Dont think this works for more layers
-        # For 2 2 1 this creates 2 3 3
         out = [np.ones((self.N, self.net_shape[r])) for r in range(len(self.net_shape))]
         out[0] = self.X
-        # print(out[2][0])
-        # quit()
+
         return out
 
     def init_neuron_outputs(self):
@@ -216,6 +215,8 @@ def plot_boundaries(model, X):
 
 if __name__ == "__main__":
     X, y = get_data(1000)
+    # X = np.c_[X, np.ones(len(X))]
+    # y = np.c_[y, np.ones(len(y))]
     mlp = MultilayerPerceptronClassifier(X, y)
     mlp.train(lr=0.01, a=0.5, epochs=2000)
     w = mlp.weights
@@ -225,6 +226,7 @@ if __name__ == "__main__":
     y_hat = [round(x[0]) for x in preds]
     
     print(np.sum(y==y_hat)/len(preds))
+
     plot_boundaries(mlp, X)
 
 
