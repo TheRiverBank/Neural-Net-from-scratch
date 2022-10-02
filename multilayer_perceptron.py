@@ -45,6 +45,7 @@ class MultilayerPerceptronClassifier():
             self.backpropagation()
             self.update_weights(lr, a)
             cost = self.print_cost()
+<<<<<<< HEAD
             """ for i in self.deltas:
                 print(i)
             print()
@@ -59,8 +60,9 @@ class MultilayerPerceptronClassifier():
                 break
             else:
                 self.prev_cost = cost """
+=======
+>>>>>>> f0bfe7f66fb412b4910938fa719d40774975fe9e
             print(cost, e)
-
 
     def forward_pass(self):
         for i in range(self.N):
@@ -124,16 +126,6 @@ class MultilayerPerceptronClassifier():
         plt.pause(0.0001)
         plt.clf()
         plt.plot()
-
-    def update_weights(self, lr, a):
-        """ Gradient decent with momentum """
-        for r in range(0, self.L - 1):
-            for j in range(0, self.net_shape[r + 1]):
-                delta = self.deltas[r][:, j]
-                outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
-                self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] = self.weights[r][j] + w_change
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -206,11 +198,14 @@ def get_data(N):
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
     x2_2 = np.random.multivariate_normal(m2_2, cov, N)
 
-    """ x1_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x1_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_1 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
-    x2_2 = (x1_1 - np.min(x1_1)) / (np.max(x1_1)- np.min(x1_1))
     """
+    x1 = np.concatenate((x1_1,x1_2))
+    x2 = np.concatenate((x2_1, x2_2))
+    plt.scatter(x1[:, 0], x1[:, 1], c='b')
+    plt.scatter(x2[:, 0], x2[:, 1], c='r')
+    plt.savefig("data.png")
+    """
+
     y1 = np.zeros(len(x1_1) + len(x1_2))
     y2 = np.ones(len(x2_1) + len(x2_2))
 
@@ -234,15 +229,10 @@ def plot_boundaries(model, X):
     r1, r2 = r1.reshape((len(r1), 1)), r2.reshape((len(r2), 1))
     # horizontal stack vectors to create x1,x2 input for the model
     grid = np.hstack((r1, r2))
-
     yhat = np.array(model.predict(grid))
-
     yhat = np.array([round(x[0]) for x in yhat])
-
     zz = yhat.reshape(xx.shape)
-
     plt.contourf(xx, yy, zz, cmap="Paired")
-
     
     plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
     plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
@@ -250,6 +240,7 @@ def plot_boundaries(model, X):
     plt.savefig("Contour3.png")
 
 
+<<<<<<< HEAD
 def plot_decision_lines(model, X):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
@@ -271,6 +262,11 @@ if __name__ == "__main__":
     X, y = get_data(200)
     # X = np.c_[X, np.ones(len(X))]
     # y = np.c_[y, np.ones(len(y))]
+=======
+if __name__ == "__main__":
+    X, y = get_data(1000)
+
+>>>>>>> f0bfe7f66fb412b4910938fa719d40774975fe9e
     mlp = MultilayerPerceptronClassifier(X, y)
     mlp.train(lr=0.02, a=0.5, epochs=2000)
     w = mlp.weights
@@ -280,10 +276,7 @@ if __name__ == "__main__":
     y_hat = [round(x[0]) for x in preds]
     
     print(np.sum(y==y_hat)/len(preds))
-    #for i in range(len(preds)):
-    #   print(round(preds[i][0]), y[i])
 
-    #plot_decision_lines(mlp, X)
     plot_boundaries(mlp, X)
 
 
