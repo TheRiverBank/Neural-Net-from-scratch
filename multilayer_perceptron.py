@@ -36,6 +36,8 @@ class MultilayerPerceptronClassifier():
 
     def train(self, lr, a, epochs=10):
         for e in range(epochs):
+            """ if e%1000 == 0 and e != 0:
+                lr = lr/10 """
             self.forward_pass()
             self.backpropagation()
             self.update_weights(lr, a)
@@ -47,7 +49,7 @@ class MultilayerPerceptronClassifier():
             for r in range(1, self.L):
                 v = np.zeros(self.net_shape[r])  # Create vector to hold neuron outputs + 1 for extended
                 for k in range(self.net_shape[r]):
-                    w = self.get_weight(r, k)
+                    w = self.weights[r-1][k]
                     neuron_out = w[:-1].T.dot(self.net_outf[r - 1][i]) + w[-1]
                     v[k] = neuron_out
                 v_f = list(map(self.activation, v))
@@ -79,17 +81,17 @@ class MultilayerPerceptronClassifier():
             for j in range(0, self.net_shape[r + 1]):
                 delta = self.deltas[r][:, j]
                 outputs = self.net_outf[r - 1]
-                w_change = (a*self.prev_weights[r][j]) - lr * np.sum(delta @ outputs)
+                w_change = (a*self.prev_weights[r][j]) + lr * np.sum(delta @ outputs)
                 self.prev_weights[r][j] = w_change # Store current change and use it as momentum next iteration.
-                self.weights[r][j] += w_change
+                self.weights[r][j] -= w_change
 
     def print_cost(self):
         cost = 0
         for i in range(self.N):
-            cost += (self.net_outf[2][i] - self.y[i]) ** 2
-        cost * 0.5
+            cost += (self.net_outf[2][i][0] - self.y[i]) ** 2
+        cost *= 0.5
 
-        return cost[0]
+        return cost
 
     def plot_updates(self, xx, yy, grid, epoch, cost):
         yhat = np.array(self.predict(grid))
@@ -126,7 +128,7 @@ class MultilayerPerceptronClassifier():
         w = [[] * 1 for r in self.net_shape[1:]]
         for r in range(len(self.net_shape[1:])):  # For each layer in the net
             for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
-                w[r].append(np.random.normal(0, 0.5, 3))
+                w[r].append(np.random.normal(-.5, 0.5, 3))
 
         return w
 
@@ -135,6 +137,7 @@ class MultilayerPerceptronClassifier():
         for r in range(len(self.net_shape[1:])):  # For each layer in the net
             for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
                 w[r].append(np.append(np.zeros(2), 1))
+                
         return w
 
     def extend_y(self):
@@ -206,10 +209,10 @@ def plot_boundaries(model, X):
 
 
 if __name__ == "__main__":
-    X, y = get_data(1000)
+    X, y = get_data(100)
 
     mlp = MultilayerPerceptronClassifier(X, y)
-    mlp.train(lr=0.01, a=0.5, epochs=2000)
+    mlp.train(lr=0.1, a=0.8, epochs=5000)
     w = mlp.weights
     ([print(x) for x in sum(w, [])])
 
