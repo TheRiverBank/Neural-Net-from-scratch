@@ -2,56 +2,86 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
+class Layer():
+    def __init__(self, n_neurons:int, input=None, first_layer=False, last_layer=False):
+        self.n_neurons = n_neurons
+        self.weights = self.init_weights()
+        self.first_layer = first_layer
+        self.last_layer = last_layer
+        self.input = input
+        self.output = input if first_layer else []
+        self.deltas = []
+        self.deltas_next = []
+
+    def forward_pass(self, input):
+        self.output.append(
+            np.append(
+                [self.weights[i].T.dot(input) for i in range(self.n_neurons)],
+                1
+                )
+            )
+      
+    def backward_propogate(self, input):
+        delts = []
+        if self.last_layer:
+            for _ in range(self.n_neurons):
+                delts.append(
+                    self.output[-1] * (1 - self.output[-1]) *
+                    self.output[-1] - input
+                )
+        else:
+            delta = self.output[-1] * (1 - self.output[-1])
+
+        self.deltas.append(delts)
+        
+        # Set the sum delta weight neede in the back propagation of the next layer
+        self.deltas_next.append(np.sum(self.deltas @ self.weights[:, :-1]))
+        print(self.deltas_next)
+
+
+    def activation(self, x, type="sigmoid"):
+        if type == "sigmoid":
+            res = 1 / (1 + np.exp(-x))
+        else:
+            quit("Unknown activation function")
+
+        return res
+
+    def init_weights(self):
+        return np.array([np.random.normal(-.5, .5, 3), 
+                         np.random.normal(-.5, .5, 3)])
+    
+    def init_deltas(self):
+        return np.ones((self.N, self.n_neurons))
+
+
 class MultilayerPerceptronClassifier():
     def __init__(self, X, y, net_shape=(2, 2, 1)):
         self.X = X
         self.y = y
         self.N = len(X)
         self.L = len(net_shape)
-        self.n_classes = np.unique(self.y[0])
-        self.n_feats = self.X.shape[0]
         self.net_shape = net_shape
-        self.weights = self.init_weights()
-        self.prev_weights = self.init_prev_weights()
-        self.net_outf = self.init_input_vectors()
-        self.net_outv = self.init_neuron_outputs()
-        self.deltas = self.init_deltas()
-        self.prev_cost = None
+       
+        self.input_layer = Layer(n_neurons=2, input=self.X, first_layer=True)
+        self.hidden_layer = Layer(n_neurons=2)
+        self.output_layer = Layer(n_neurons=1, last_layer=True)
 
-        for i in self.net_outf:
-            print(i)
+        self.layers = [self.input_layer, self.hidden_layer, self.output_layer]
 
-    def init_weights(self):
-        # W[LAYER][NEURON][WEIGHT i]
-        w = [[] * 1 for r in self.net_shape[1:]]
-        for r in range(len(self.net_shape[1:])):  # For each layer in the net
-            for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
-                w[r].append(np.random.normal(-.5, 0.5, 3))
+    def train(self, a, lr):
+        for i in range(self.N):
+            for r, layer in enumerate(self.layers[1:]):
+                # Start at r + 1 which is initialy the first hidden layer.
+                self.layers[r+1].forward_pass(self.layers[r].output[i])
+            for r, layer in reversed(list(enumerate(self.layers[1:]))):
+                prev_gradient = 0
+                layer.backward_propogate(self.y[i])
+                quit()
+        
+       
+        
 
-        return w
-
-    def init_prev_weights(self):
-        w = [[] * 1 for r in self.net_shape[1:]]
-        for r in range(len(self.net_shape[1:])):  # For each layer in the net
-            for k in range(self.net_shape[1:][r]):  # For each neuron in the current layer
-                w[r].append(np.zeros(3))
-        return w
-
-    def init_input_vectors(self):
-        # [r][i][k]
-        # Add one to the input vector to di the vectorized approach
-        out = [np.ones((self.N, self.net_shape[r] + 1)) for r in range(len(self.net_shape))]
-        out[0] = self.X
-
-        return out
-
-    def init_neuron_outputs(self):
-        return self.init_input_vectors()
-
-    def init_deltas(self):
-        # [r][i][k]
-        # Add one extra dimention for the vectorized approach
-        return [np.ones((self.N, r + 1)) for r in self.net_shape[1:]]
 
 def get_data(N):
     cov = np.array([[0.01, 0.0], [0.0, 0.01]])
@@ -81,3 +111,4 @@ if __name__ == "__main__":
     X, y = get_data(100)
 
     mlp = MultilayerPerceptronClassifier(X,y)
+    mlp.train(a=0.5, lr=0.01)
