@@ -16,7 +16,7 @@ class Layer():
     def forward_pass(self, input):
         self.output.append(
             np.append(
-                [self.weights[i].T.dot(input) for i in range(self.n_neurons)],
+                [self.activation(self.weights[i].T.dot(input)) for i in range(self.n_neurons)],
                 1
                 )
             )
@@ -25,19 +25,26 @@ class Layer():
         delts = []
         if self.last_layer:
             for _ in range(self.n_neurons):
-                delts.append(
-                    self.output[-1] * (1 - self.output[-1]) *
-                    self.output[-1] - input
-                )
+                self.deltas.append(list((self.output[-1] * (1 - self.output[-1]) * (self.output[-1] - input))[:-1]))
         else:
-            delta = self.output[-1] * (1 - self.output[-1])
-
-        self.deltas.append(delts)
-        
+            self.deltas.append(list((input * self.output[-1] * (1 - self.output[-1]))[:-1]))
         # Set the sum delta weight neede in the back propagation of the next layer
-        self.deltas_next.append(np.sum(self.deltas @ self.weights[:, :-1]))
-        print(self.deltas_next)
+      
+        for j in range(self.n_neurons):
+            #print(np.sum(self.deltas * self.weights[:, j]))
+            
+            self.deltas_next.append(np.sum(self.deltas * self.weights[:, j]))
 
+    def update_weights(self, lr, input):
+        """ Gradient decent with momentum """
+        print(len(self.deltas), len(input))
+        #print(np.sum(np.c_[self.deltas, np.ones(len(self.deltas))].T @ input))
+        w_change = -lr * np.sum(np.c_[self.deltas, np.ones(len(self.deltas))].T @ input)
+        #print(w_change)
+        self.weights += w_change
+
+        self.deltas = []
+        self.deltas_next = []
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -68,18 +75,35 @@ class MultilayerPerceptronClassifier():
         self.output_layer = Layer(n_neurons=1, last_layer=True)
 
         self.layers = [self.input_layer, self.hidden_layer, self.output_layer]
+     
+    def train(self, a, lr, epochs=100):
+        for e in range(epochs):
+            print(e)
+            for i in range(self.N):
+                for r, layer in enumerate(self.layers[1:]):
+                    # Start at r + 1 which is initialy the first hidden layer.
+                    self.layers[r+1].forward_pass(self.layers[r].output[i])
 
-    def train(self, a, lr):
-        for i in range(self.N):
+            for i in range(self.N):
+                for r in range(self.L-1, 0, -1):
+                    layer = self.layers[r]
+                    if layer.last_layer:
+                        layer.backward_propogate(self.y[i])
+                    else:
+                        layer.backward_propogate(self.layers[r+1].deltas_next[-1])
+
+            
             for r, layer in enumerate(self.layers[1:]):
                 # Start at r + 1 which is initialy the first hidden layer.
-                self.layers[r+1].forward_pass(self.layers[r].output[i])
-            for r, layer in reversed(list(enumerate(self.layers[1:]))):
-                prev_gradient = 0
-                layer.backward_propogate(self.y[i])
-                quit()
+                self.layers[r+1].update_weights(lr, self.layers[r].output[-self.N:])
         
-       
+                
+        """  
+        for i in self.layers[1].deltas:
+            print(i)
+        """
+        for layer in self.layers:
+            print(layer.weights) 
         
 
 
@@ -108,7 +132,7 @@ def get_data(N):
 
 
 if __name__ == "__main__":
-    X, y = get_data(100)
+    X, y = get_data(10)
 
     mlp = MultilayerPerceptronClassifier(X,y)
     mlp.train(a=0.5, lr=0.01)
