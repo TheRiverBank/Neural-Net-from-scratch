@@ -14,7 +14,7 @@ class Layer():
         self.deltas_next = np.zeros(2)
 
     def predict(self, X):
-        return np.round([self.activation(self.weights[i].dot(X.T)) for i in range(self.n_neurons)])
+        return np.round([self.activation(self.weights[i].T.dot(X.T)) for i in range(self.n_neurons)])
 
     def forward_pass(self, input):
         outf = np.ones((len(input), self.n_neurons + 1))
@@ -28,38 +28,23 @@ class Layer():
                 self.deltas.append(
                     (self.output[:, :-1] * (1 - self.output[:, :-1]) * 
                     (self.output[:, :-1] - input[:, :-1])))
+    
+            self.deltas_next[0] = np.sum(np.array(self.deltas[0]) * self.weights[0, 0])
+            self.deltas_next[1] = np.sum(np.array(self.deltas[0]) * self.weights[0, 1])
+
         else:
-            d = []
-            for j in range(self.n_neurons):
-                print(input)
-                d.append(input[j] * (self.output[:, j] * (1 - self.output[:, j])))
-            self.deltas.append(d)
-        # Set the sum delta weiight neede in the back propagation of the next layer
-        self.deltas = np.array(self.deltas[0])
-        #quit()
-
-        ##### Multiply all deltas from each neuron with j'th component of weights
-        ##### For one neuron this gives two values, for two it gives four.
-        ##### Store this as
-        ##### [D1 * W1j1, D1 * W1j2]
-        ##### [D2 * W2j1, D2 * W2j2]
-
-        sum1 = np.sum(self.deltas[:, 0] * self.weights[:, 0] +
-                      self.deltas[:, 1] * self.weights[:, 1])
-        for k in range(self.n_neurons):
-            sum = 0
-            for j in range(self.n_neurons):  # Should really be n_neurons in layer r+1
-                #self.deltas_next.append(np.sum(self.deltas[:, j] * self.weights[:, j]))
-                #print(k, j)
-                #print(self.deltas_next[k, j])
-                sum += np.sum(self.deltas[:, j] * self.weights[:, j])
-            self.deltas_next[k] = sum
+            self.deltas.append(
+                np.array(
+                    [input[0] * (self.output[:, 0] * (1 - self.output[:, 0])), 
+                     input[1] * (self.output[:, 1] * (1 - self.output[:, 1]))]).T)
 
     def update_weights(self, lr, input):
         """ Gradient decent with momentum """
         input = np.array(input)
-        w_change = -lr * np.sum(self.deltas[0] * input[:, :-1])
-        self.weights += w_change
+        for k in range(self.n_neurons):
+            w_change = -lr * np.sum(self.deltas[0][:, k] @ input[:, :-1])
+            self.weights[:, k] += w_change
+
         self.deltas = []
         self.deltas_next[:] = 0
 
@@ -193,10 +178,10 @@ if __name__ == "__main__":
             weights=None,
             n_neurons=2, input=X, first_layer=True)
     hidden_layer = Layer(
-        weights=np.array([np.random.normal(-0.5, 0.5, 3), np.random.normal(-0.5, 0.5, 3)]),
+        weights=np.array([np.random.normal(0, 0.5, 3), np.random.normal(0, 0.5, 3)]),
         n_neurons=2)
     output_layer = Layer(
-        weights=np.array([np.random.normal(-0.5, 0.5, 3)]),
+        weights=np.array([np.random.normal(0, 0.5, 3)]),
         n_neurons=1, last_layer=True)
 
     layers = [input_layer, hidden_layer, output_layer]
