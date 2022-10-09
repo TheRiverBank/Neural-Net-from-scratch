@@ -21,11 +21,9 @@ class Layer():
         outf = np.ones((len(net_input), self.n_neurons + 1))
         for k in range(self.n_neurons):
             outf[:, k] = np.array([self.activation(self.weights[k].dot(np.array(net_input).T))])
-        #print("FORWARD RESULTS\n", outf)
         self.output = outf
        
     def backward_propogate(self, net_input):
-        #print("net_input\n", net_input)
         if self.last_layer:
             for _ in range(self.n_neurons):
                 self.deltas.append(
@@ -33,31 +31,19 @@ class Layer():
                     (self.output[:, :-1] - net_input[:, :-1])))
             self.deltas_next = np.column_stack(((np.array(self.deltas[0])*self.weights[0, 0]), (np.array(self.deltas[0])*self.weights[0, 1])))
         else:
-            """ self.deltas.append(
-                np.array(
-                    [net_input[0] * (self.output[:, 0] * (1 - self.output[:, 0])), 
-                     net_input[1] * (self.output[:, 1] * (1 - self.output[:, 1]))]).T) """
             self.deltas = net_input * (self.output[:, :-1] * (1 - self.output[:, :-1]))
-
-        #print("DELTAS RESULTS\n", self.deltas)
-        #print("DELTAS NEXT\n", self.deltas_next)
 
     def update_weights(self, lr, net_input):
         """ Gradient decent with momentum """
         net_input = np.array(net_input)
-        """ print("Updatin dem waits")
-        print(net_input)
-        print("DELTAS:", self.deltas) """
 
         for k in range(self.n_neurons):
             if self.n_neurons == 1:
                 w_change = -lr * self.deltas[k].T @ net_input
-                #print(self.weights[k], w_change)
                 self.weights[k] += w_change[0]
             else:
                 w_change = -lr * self.deltas[:, k].T @ net_input
                 self.weights[k, :] += w_change
-            #print(f"CHANGE FOR {k}\n{w_change}")
 
         self.deltas = []
         self.deltas_next = []
@@ -92,9 +78,6 @@ class MultilayerPerceptronClassifier():
     def predict(self, X):
         self.layers[0].output = X
         for r, layer in enumerate(self.layers[1:]):
-            #print("LAYER:", r)
-            # Start at r + 1 which is initialy the first hidden layer.
-
             self.layers[r+1].forward_pass(self.layers[r].output)
         
         preds = np.round(self.layers[-1].output)
@@ -143,7 +126,7 @@ class MultilayerPerceptronClassifier():
 
         return cost
 
-def get_data(N):
+def get_XOR_data(N):
     cov = np.array([[0.001, 0.0], [0.0, 0.001]])
     m1_1 = np.array([0, 0])
     m1_2 = np.array([1, 1])
@@ -167,32 +150,66 @@ def get_data(N):
 
     return X, y
 
+def get_poly_data(N):
+    cov = np.array([[0.01, 0.0], [0.0, 0.01]])
+    m1_1 = np.array([0, 1])
+    m1_2 = np.array([0.8, 1])
+    m1_3 = np.array([1, 0.8])
+    m1_4 = np.array([1, 0])
+    m2 = np.array([0.6, 0.6])
+
+
+    x1_1 = np.random.multivariate_normal(m1_1, cov, N)
+    x1_2 = np.random.multivariate_normal(m1_2, cov, N)
+    x1_3 = np.random.multivariate_normal(m1_3, cov, N)
+    x1_4 = np.random.multivariate_normal(m1_4, cov, N)
+    x2 = np.random.multivariate_normal(m2, cov, N)
+
+    y1 = np.zeros(N*4)
+    y2 = np.ones(N)
+
+    X = np.concatenate((x1_1, x1_2, x1_3, x1_4, x2))
+    X = np.c_[X, np.ones(len(X))]
+    
+    y = np.concatenate((y1, y2))
+    y = np.c_[y, np.ones(len(y))]
+
+    return X, y
+
 def get_test_data(N):
     X = np.array([[0, 0, 1], [0, 0.5, 1], [1, 1, 1], [1, 1.5, 1]])
     y = np.array([[0, 1], [0, 1], [1, 1], [1, 1]])
 
-  
-    """ cov = np.array([[0.001, 0.0], [0.0, 0.001]])
-    m1 = np.array([1, 0])
-    m2 = np.array([0, 1])
-
-
-    x1 = np.random.multivariate_normal(m1, cov, N)
-    x2 = np.random.multivariate_normal(m2, cov, N)
-
-    y1 = np.zeros(len(x1))
-    y2 = np.ones(len(x2))
-
-    X = np.concatenate((x1, x2))
-    X = np.c_[X, np.ones(len(X))]
-
-    y = np.concatenate((y1, y2))
-    y = np.c_[y, np.ones(len(y))] """
-
     return X, y
 
 
-def plot_boundaries(model, X):
+def plot_xor_boundaries(model, X):
+    min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
+    min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
+    # define the x and y scale
+    x1grid = np.arange(min1, max1, 0.01)
+    x2grid = np.arange(min2, max2, 0.01)
+    # create all of the lines and rows of the grid
+    xx, yy = np.meshgrid(x1grid, x2grid)
+
+    # flatten each grid to a vector
+    r1, r2 = xx.flatten(), yy.flatten()
+    r1, r2 = r1.reshape((len(r1), 1)), r2.reshape((len(r2), 1))
+    # horizontal stack vectors to create x1,x2 net_input for the model
+    grid = np.hstack((r1, r2))
+    grid = np.c_[grid, np.ones(len(grid))]
+    yhat = np.array(model.predict(grid))[:, 0]
+    
+    zz = yhat.reshape(xx.shape)
+    plt.contourf(xx, yy, zz, cmap="Paired")
+    
+    plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
+    plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
+    plt.show()
+    plt.savefig("Contour3.png")
+
+
+def plot_poly_boundaries(model, X):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
     # define the x and y scale
@@ -213,15 +230,14 @@ def plot_boundaries(model, X):
     zz = yhat.reshape(xx.shape)
     plt.contourf(xx, yy, zz, cmap="Paired")
     
-    plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
-    plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
+    plt.scatter(X[:400, 0], X[:400, 1], c='b')
+    plt.scatter(X[400:, 0], X[400:, 1], c='r')
     plt.show()
     plt.savefig("Contour3.png")
 
-
 if __name__ == "__main__":
     #X, y = get_test_data(100)
-    X, y = get_data(100)
+    X, y = get_poly_data(100)
     net_input_layer = Layer(
             weights=None,
             n_neurons=2, net_input=X, first_layer=True)
@@ -232,15 +248,6 @@ if __name__ == "__main__":
         weights=np.array([[0.6, -0.2, 0.4]]),
         n_neurons=1, last_layer=True)
 
-    """ net_input_layer = Layer(
-            weights=None,
-            n_neurons=2, net_input=X, first_layer=True)
-    hidden_layer = Layer(
-        weights=np.array([np.random.normal(0, 0.5, 3), np.random.normal(0, 0.5, 3)]),
-        n_neurons=2)
-    output_layer = Layer(
-        weights=np.array([np.random.normal(0, 0.5, 3)]),
-        n_neurons=1, last_layer=True) """
 
     layers = [net_input_layer, hidden_layer, output_layer]
 
@@ -248,9 +255,10 @@ if __name__ == "__main__":
 
     for i in mlp.layers[1:]:
         print(i.weights)
-    mlp.train(a=0.5, lr=0.001, epochs=10000)
+    mlp.train(a=0.5, lr=0.01, epochs=20000)
 
     predictions = mlp.predict(X)
     print("Accuracy:", np.sum(y[:,0]==predictions[:, 0])/len(y))
     print(predictions)
-    plot_boundaries(mlp, X)
+    #plot_boundaries(mlp, X)
+    plot_poly_boundaries(mlp, X)
