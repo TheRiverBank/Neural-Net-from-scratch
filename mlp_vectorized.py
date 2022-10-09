@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 
 
 class Layer():
-    def __init__(self, weights, n_neurons:int, input=None, first_layer=False, last_layer=False):
+    def __init__(self, weights, n_neurons, input=None, first_layer=False, last_layer=False):
         self.n_neurons = n_neurons
         self.weights = weights
         self.first_layer = first_layer
@@ -11,7 +11,7 @@ class Layer():
         self.input = input
         self.output = input if first_layer else []
         self.deltas = []
-        self.deltas_next = []
+        self.deltas_next = np.zeros(2)
 
     def predict(self, X):
         return np.round([self.activation(self.weights[i].dot(X.T)) for i in range(self.n_neurons)])
@@ -19,36 +19,49 @@ class Layer():
     def forward_pass(self, input):
         outf = np.ones((len(input), self.n_neurons + 1))
         for k in range(self.n_neurons):
-            outf[:, k] = np.array([self.activation(self.weights[k].dot(np.array(input).T))])
+            outf[:, k] = np.array([self.activation(self.weights[k].T.dot(np.array(input).T))])
         self.output = outf
        
     def backward_propogate(self, input):
         if self.last_layer:
             for _ in range(self.n_neurons):
                 self.deltas.append(
-                    (self.output[:, :-1] * (1 - self.output[:, :-1]) * (self.output[:, :-1] - input[:, :-1])))
+                    (self.output[:, :-1] * (1 - self.output[:, :-1]) * 
+                    (self.output[:, :-1] - input[:, :-1])))
         else:
-            self.deltas.append((input * self.output[:, :-1] * (1 - self.output[:, :-1])))
-        # Set the sum delta weight neede in the back propagation of the next layer
-
-        #print(self.deltas[0][-1])
-        for j in range(self.n_neurons):
-            #print(np.sum(self.deltas * self.weights[:, j]))
-            self.deltas_next.append(np.sum(self.deltas[0][-1] * self.weights[:, j]))
-            #print(np.sum(self.deltas * self.weights[:, j]))
-        #print(np.array(self.deltas), np.shape(self.deltas)) 
+            d = []
+            for j in range(self.n_neurons):
+                print(input)
+                d.append(input[j] * (self.output[:, j] * (1 - self.output[:, j])))
+            self.deltas.append(d)
+        # Set the sum delta weiight neede in the back propagation of the next layer
+        self.deltas = np.array(self.deltas[0])
         #quit()
+
+        ##### Multiply all deltas from each neuron with j'th component of weights
+        ##### For one neuron this gives two values, for two it gives four.
+        ##### Store this as
+        ##### [D1 * W1j1, D1 * W1j2]
+        ##### [D2 * W2j1, D2 * W2j2]
+
+        sum1 = np.sum(self.deltas[:, 0] * self.weights[:, 0] +
+                      self.deltas[:, 1] * self.weights[:, 1])
+        for k in range(self.n_neurons):
+            sum = 0
+            for j in range(self.n_neurons):  # Should really be n_neurons in layer r+1
+                #self.deltas_next.append(np.sum(self.deltas[:, j] * self.weights[:, j]))
+                #print(k, j)
+                #print(self.deltas_next[k, j])
+                sum += np.sum(self.deltas[:, j] * self.weights[:, j])
+            self.deltas_next[k] = sum
 
     def update_weights(self, lr, input):
         """ Gradient decent with momentum """
-        #print(len(self.deltas), len(input))
-        #print(np.sum(np.c_[self.deltas, np.ones(len(self.deltas))].T @ input))
-        #w_change = -lr * np.sum(np.c_[self.deltas, np.ones(len(self.deltas))].T @ input)
         input = np.array(input)
-        w_change = -lr * np.sum(self.deltas * input[:, :-1])
+        w_change = -lr * np.sum(self.deltas[0] * input[:, :-1])
         self.weights += w_change
         self.deltas = []
-        self.deltas_next = []
+        self.deltas_next[:] = 0
 
 
     def activation(self, x, type="sigmoid"):
@@ -60,8 +73,8 @@ class Layer():
         return res
 
     def init_weights(self):
-        return np.array([np.random.normal(-.5, .5, 3), 
-                         np.random.normal(-.5, .5, 3)])
+        return np.array([np.random.normal(0, .5, 3), 
+                         np.random.normal(0, .5, 3)])
     
     def init_deltas(self):
         return np.ones((self.N, self.n_neurons + 1))
@@ -78,7 +91,7 @@ class MultilayerPerceptronClassifier():
         self.layers = layers
     
     def predict(self, X):
-        return self.layers[1].predict(X)
+        return self.layers[-1].predict(X)
 
     def train(self, a, lr, epochs=1000):
         for e in range(epochs):
@@ -111,18 +124,17 @@ class MultilayerPerceptronClassifier():
             # Remove all values produced by the hidden and output layers
             if not self.layers[r].first_layer:
                 self.layers[r].output = []
-        self.layers[-1].output = self.layers[-1].output[-self.N:]
 
     def get_cost(self, output):
         cost = 0
         for i in range(self.N):
             cost += (output[i][0] - self.y[i][0]) ** 2
-        cost *= 0.5
+        cost /= self.N
 
         return cost
 
 def get_data(N):
-    cov = np.array([[0.01, 0.0], [0.0, 0.01]])
+    cov = np.array([[0.001, 0.0], [0.0, 0.001]])
     m1_1 = np.array([0, 0])
     m1_2 = np.array([1, 1])
     m2_1 = np.array([0, 1])
@@ -163,6 +175,7 @@ def plot_boundaries(model, X):
     grid = np.hstack((r1, r2))
     grid = np.c_[grid, np.ones(len(grid))]
     yhat = np.array(model.predict(grid))
+    #print(yhat)
 
     zz = yhat.reshape(xx.shape)
     plt.contourf(xx, yy, zz, cmap="Paired")
@@ -175,7 +188,7 @@ def plot_boundaries(model, X):
 
 if __name__ == "__main__":
     X, y = get_data(100)
-    print(X.shape)
+
     input_layer = Layer(
             weights=None,
             n_neurons=2, input=X, first_layer=True)
@@ -189,15 +202,13 @@ if __name__ == "__main__":
     layers = [input_layer, hidden_layer, output_layer]
 
     mlp = MultilayerPerceptronClassifier(X,y,layers=layers)
+
     for i in mlp.layers[1:]:
         print(i.weights)
-    mlp.train(a=0.5, lr=0.001, epochs=10000)
+    mlp.train(a=0.5, lr=0.0001, epochs=10000)
 
     predictions = mlp.predict(X)
-    """ print(predictions)
-    print(y[:, 0]) """
+    
     print("Accuracy:", np.sum(y[:,0]==predictions[:, 0])/len(y))
-    print(y[:,0])
-    print(predictions[0, :])
-    #print(predictions)
+    print(predictions)
     plot_boundaries(mlp, X)
