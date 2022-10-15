@@ -124,6 +124,7 @@ class MultilayerPerceptronClassifier():
 
         return cost
 
+
 def get_XOR_data(N):
     cov = np.array([[0.001, 0.0], [0.0, 0.001]])
     m1_1 = np.array([0, 0])
@@ -146,6 +147,7 @@ def get_XOR_data(N):
     y = np.c_[y, np.ones(len(y))]
 
     return X, y
+
 
 def get_poly_data(N):
     cov = np.array([[0.01, 0.0], [0.0, 0.01]])
@@ -171,6 +173,7 @@ def get_poly_data(N):
     y = np.c_[y, np.ones(len(y))]
 
     return X, y
+
 
 def get_test_data(N):
     X = np.array([[0, 0, 1], [0, 0.5, 1], [1, 1, 1], [1, 1.5, 1]])
@@ -230,6 +233,7 @@ def plot_poly_boundaries(model, X):
     plt.show()
     plt.savefig("Contour3.png")
 
+
 if __name__ == "__main__":
     #X, y = get_test_data(100)
     X, y = get_poly_data(100)
@@ -242,7 +246,6 @@ if __name__ == "__main__":
     output_layer = Layer(
         weights=np.array([[0.6, -0.2, 0.4]]),
         n_neurons=1, last_layer=True)
-
 
     layers = [net_input_layer, hidden_layer, output_layer]
 
