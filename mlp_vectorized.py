@@ -98,8 +98,6 @@ class MultilayerPerceptronClassifier():
 
     def forward_pass(self):
         for r, layer in enumerate(self.layers[1:]):
-            #print("LAYER:", r)
-            # Start at r + 1 which is initialy the first hidden layer.
             self.layers[r+1].forward_pass(self.layers[r].output)
               
     def back_propagation(self):
@@ -133,7 +131,6 @@ def get_XOR_data(N):
     m2_1 = np.array([0, 1])
     m2_2 = np.array([1, 0])
 
-
     x1_1 = np.random.multivariate_normal(m1_1, cov, N)
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
     x2_1 = np.random.multivariate_normal(m2_1, cov, N)
@@ -157,7 +154,6 @@ def get_poly_data(N):
     m1_3 = np.array([1, 0.8])
     m1_4 = np.array([1, 0])
     m2 = np.array([0.6, 0.6])
-
 
     x1_1 = np.random.multivariate_normal(m1_1, cov, N)
     x1_2 = np.random.multivariate_normal(m1_2, cov, N)
@@ -225,7 +221,6 @@ def plot_poly_boundaries(model, X):
     grid = np.hstack((r1, r2))
     grid = np.c_[grid, np.ones(len(grid))]
     yhat = np.array(model.predict(grid))[:, 0]
-    
 
     zz = yhat.reshape(xx.shape)
     plt.contourf(xx, yy, zz, cmap="Paired")
