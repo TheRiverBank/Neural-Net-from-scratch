@@ -14,7 +14,10 @@ class Layer():
         self.deltas_next = []
 
     def predict(self, X):
-        return np.round([self.activation(self.weights[i].T.dot(X.T)) for i in range(self.n_neurons)])
+        predictions = [self.activation(self.weights[i].T.dot(X.T)) for i in range(self.n_neurons)]
+        highest_probs = np.argmax(predictions[:, :-1], axis=1)
+
+        return highest_probs
 
     def forward_pass(self, net_input):
         outf = np.ones((len(net_input), self.n_neurons + 1))
@@ -25,21 +28,20 @@ class Layer():
     def backward_propogate(self, net_input, last_layer=False):
         if last_layer:
             for _ in range(self.n_neurons):
-                self.deltas.append(
+                self.deltas = (
                     (self.output[:, :-1] * (1 - self.output[:, :-1]) * 
                     (self.output[:, :-1] - net_input[:, :-1])))
-                self.compute_next_delta(len(net_input))
         else:
-            #print(net_input.shape, self.output[:, :-1].shape)
             self.deltas = net_input * (self.output[:, :-1] * (1 - self.output[:, :-1]))
+        
+        self.compute_next_delta(len(net_input))
 
     def update_weights(self, lr, net_input):
         """ Gradient decent with momentum """
         net_input = np.array(net_input)
-
         for k in range(self.n_neurons):
             if self.n_neurons == 1:
-                w_change = -lr * self.deltas[k].T @ net_input
+                w_change = -lr * self.deltas.T @ net_input
                 self.weights[k] += w_change[0]
             else:
                 w_change = -lr * self.deltas[:, k].T @ net_input
@@ -49,19 +51,13 @@ class Layer():
         self.deltas_next = []
 
     def compute_next_delta(self, n):
-        e = np.column_stack(((np.array(self.deltas[0])*self.weights[0, 0]), (np.array(self.deltas[0])*self.weights[0, 1])))
-        
         d = np.zeros((n, len(self.weights[0])-1))
         
         for k in range(self.n_neurons):
             for j in range(len(self.weights[0])-1):
-                d[:, j] += np.array(self.deltas[0])[:, k] * self.weights[k, j]
+                d[:, j] += self.deltas[:, k] * self.weights[k, j]
         self.deltas_next = d
 
-        #print(d[-1])
-        #print(e[-1])
-
-        #quit()
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -90,9 +86,10 @@ class MultilayerPerceptronClassifier():
         self.layers[0].output = X
         for r, layer in enumerate(self.layers[1:]):
             self.layers[r+1].forward_pass(self.layers[r].output)
-        
+            
         preds = np.round(self.layers[-1].output)
-
+        
+        #preds = np.argmax(self.layers[-1].output[:, :-1], axis=1)
         return preds
 
     def train(self, a, lr, epochs=1000):
@@ -147,8 +144,9 @@ class MultilayerPerceptronClassifier():
 
 if __name__ == "__main__":
     #X, y = get_test_data(100)
-    X, y = get_poly_data(100)
-
+    N = 100
+    X, y = get_XOR_data(N)
+    #X, y = get_multi_class_data(3, N)
     # net_input_layer = Layer(
     #         weights=None,
     #         n_neurons=2, net_input=X, first_layer=True)
@@ -159,16 +157,18 @@ if __name__ == "__main__":
     #     weights=np.array([[0.6, -0.2, 0.4]]),
     #     n_neurons=1, last_layer=True)
 
-    mlp = MultilayerPerceptronClassifier(X, y, net_shape=(2, 20, 1))
+    mlp = MultilayerPerceptronClassifier(X, y, net_shape=(2, 30, 1))
     mlp.add_layer(2)
-    mlp.add_layer(20)
+    #mlp.add_layer(10)
+    mlp.add_layer(30)
     mlp.add_layer(1)
     for i in mlp.layers[1:]:
         print(i.weights)
     mlp.train(a=0.5, lr=0.01, epochs=10000)
 
     predictions = mlp.predict(X)
+    for i in predictions:
+        print(i)
     print("Accuracy:", np.sum(y[:,0]==predictions[:, 0])/len(y))
-    print(predictions)
     #plot_boundaries(mlp, X)
-    plot_poly_boundaries(mlp, X)
+    plot_poly_boundaries(mlp, X, N)

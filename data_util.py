@@ -53,6 +53,27 @@ def get_poly_data(N):
     return X, y
 
 
+def get_multi_class_data(n_classes, N):
+    X = np.zeros((N*n_classes, 2))
+    Y = np.zeros((N*n_classes))
+    
+    cov = np.diag(np.full(2, 0.001))
+
+    for i in range(n_classes):
+        m = np.array([i, i%2])
+        x = np.random.multivariate_normal(m, cov, N)
+        y = np.ones(N) * i
+       
+        X[N*i:N*i+N] = x
+        Y[N*i:N*i+N] = y
+
+    X = np.c_[X, np.ones(len(X))]
+    Y = np.c_[Y, np.ones(len(Y))]
+
+    return X, Y
+
+
+
 def get_test_data(N):
     X = np.array([[0, 0, 1], [0, 0.5, 1], [1, 1, 1], [1, 1.5, 1]])
     y = np.array([[0, 1], [0, 1], [1, 1], [1, 1]])
@@ -86,7 +107,8 @@ def plot_xor_boundaries(model, X):
     plt.savefig("Contour3.png")
 
 
-def plot_poly_boundaries(model, X):
+from matplotlib.pyplot import cm
+def plot_poly_boundaries(model, X, N):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
     # define the x and y scale
@@ -105,8 +127,11 @@ def plot_poly_boundaries(model, X):
 
     zz = yhat.reshape(xx.shape)
     plt.contourf(xx, yy, zz, cmap="Paired")
-    
-    plt.scatter(X[:400, 0], X[:400, 1], c='b')
-    plt.scatter(X[400:, 0], X[400:, 1], c='r')
+
+
+    color = cm.rainbow(np.linspace(0, 1, len(X)//N))
+
+    for i in range(len(X)//N):
+        plt.scatter(X[N*i:N*i+N:, 0], X[N*i:N*i+N:, 1], c=color[i])
     plt.show()
     plt.savefig("Contour3.png")
