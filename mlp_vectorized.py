@@ -21,17 +21,17 @@ class Layer():
         for k in range(self.n_neurons):
             outf[:, k] = np.array([self.activation(self.weights[k].dot(np.array(net_input).T))])
         self.output = outf
-       
+    
     def backward_propogate(self, net_input, last_layer=False):
         if last_layer:
             for _ in range(self.n_neurons):
                 self.deltas.append(
                     (self.output[:, :-1] * (1 - self.output[:, :-1]) * 
                     (self.output[:, :-1] - net_input[:, :-1])))
-            self.deltas_next = np.column_stack(((np.array(self.deltas[0])*self.weights[0, 0]), (np.array(self.deltas[0])*self.weights[0, 1])))
+                self.compute_next_delta(len(net_input))
         else:
-            print(net_input.shape, self.output[:, :-1].shape)
-            self.deltas = net_input @ (self.output[:, :-1] * (1 - self.output[:, :-1]))
+            #print(net_input.shape, self.output[:, :-1].shape)
+            self.deltas = net_input * (self.output[:, :-1] * (1 - self.output[:, :-1]))
 
     def update_weights(self, lr, net_input):
         """ Gradient decent with momentum """
@@ -48,6 +48,21 @@ class Layer():
         self.deltas = []
         self.deltas_next = []
 
+    def compute_next_delta(self, n):
+        e = np.column_stack(((np.array(self.deltas[0])*self.weights[0, 0]), (np.array(self.deltas[0])*self.weights[0, 1])))
+        
+        d = np.zeros((n, len(self.weights[0])-1))
+        
+        for k in range(self.n_neurons):
+            for j in range(len(self.weights[0])-1):
+                d[:, j] += np.array(self.deltas[0])[:, k] * self.weights[k, j]
+        self.deltas_next = d
+
+        #print(d[-1])
+        #print(e[-1])
+
+        #quit()
+
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
             res = 1 / (1 + np.exp(-x))
@@ -61,7 +76,7 @@ class Layer():
 
 
 class MultilayerPerceptronClassifier():
-    def __init__(self, X, y, net_shape=(2,2,1)):
+    def __init__(self, X, y, net_shape):
         self.X = X
         self.y = y
         self.N = len(X)
@@ -144,9 +159,9 @@ if __name__ == "__main__":
     #     weights=np.array([[0.6, -0.2, 0.4]]),
     #     n_neurons=1, last_layer=True)
 
-    mlp = MultilayerPerceptronClassifier(X,y)
+    mlp = MultilayerPerceptronClassifier(X, y, net_shape=(2, 20, 1))
     mlp.add_layer(2)
-    mlp.add_layer(3)
+    mlp.add_layer(20)
     mlp.add_layer(1)
     for i in mlp.layers[1:]:
         print(i.weights)
