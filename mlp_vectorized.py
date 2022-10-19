@@ -7,17 +7,12 @@ class Layer():
     def __init__(self, weights, n_neurons, net_input=None, first_layer=False):
         self.n_neurons = n_neurons
         self.weights = weights
+        self.previous_weights = np.zeros_like(weights)
         self.first_layer = first_layer
         self.net_input = net_input
         self.output = net_input if first_layer else []
         self.deltas = []
         self.deltas_next = []
-
-    def predict(self, X):
-        predictions = [self.activation(self.weights[i].T.dot(X.T)) for i in range(self.n_neurons)]
-        highest_probs = np.argmax(predictions[:, :-1], axis=1)
-
-        return highest_probs
 
     def forward_pass(self, net_input):
         outf = np.ones((len(net_input), self.n_neurons + 1))
@@ -36,17 +31,14 @@ class Layer():
         
         self.compute_next_delta(len(net_input))
 
-    def update_weights(self, lr, net_input):
+    def update_weights(self, alpha, lr, net_input):
         """ Gradient decent with momentum """
         net_input = np.array(net_input)
         for k in range(self.n_neurons):
-            if self.n_neurons == 1:
-                w_change = -lr * self.deltas.T @ net_input
-                self.weights[k] += w_change[0]
-            else:
-                w_change = -lr * self.deltas[:, k].T @ net_input
-                self.weights[k, :] += w_change
-
+            w_change = -lr * self.deltas[:, k].T @ net_input
+            w_old = self.previous_weights[k]
+            self.weights[k, :] += w_change + w_old*alpha
+            self.previous_weights[k] = w_change
         self.deltas = []
         self.deltas_next = []
 
@@ -57,7 +49,6 @@ class Layer():
             for j in range(len(self.weights[0])-1):
                 d[:, j] += self.deltas[:, k] * self.weights[k, j]
         self.deltas_next = d
-
 
     def activation(self, x, type="sigmoid"):
         if type == "sigmoid":
@@ -95,7 +86,6 @@ class MultilayerPerceptronClassifier():
         preds = np.zeros_like(out)
         preds[np.arange(len(out)), out.argmax(1)] = 1
        
-        #print(self.layers[-1].output[:, :-1])
         class_labels = np.argmax(self.layers[-1].output[:, :-1], axis=1)
         
         if flat:
@@ -125,7 +115,7 @@ class MultilayerPerceptronClassifier():
     def update_weights(self, a, lr):
         for r, layer in enumerate(self.layers[1:]):
             # Start at r + 1 which is initialy the first hidden layer.
-            self.layers[r+1].update_weights(lr, self.layers[r].output)
+            self.layers[r+1].update_weights(a, lr, self.layers[r].output)
             # Remove all values produced by the hidden and output layers
             if not self.layers[r].first_layer:
                 self.layers[r].output = []

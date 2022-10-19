@@ -15,7 +15,7 @@ def xor_test():
     mlp.add_layer(2)
     mlp.add_layer(2)
 
-    mlp.train(a=0.5, lr=0.01, epochs=10000)
+    mlp.train(a=0.1, lr=0.001, epochs=10000)
 
     predictions = mlp.predict(X,flat=True)
 
@@ -56,7 +56,7 @@ def multi_class_test():
     mlp.add_layer(20)
     mlp.add_layer(9)
 
-    mlp.train(a=0.5, lr=0.01, epochs=1000)
+    mlp.train(a=0.3, lr=0.01, epochs=1000)
 
     predictions = mlp.predict(X,flat=True)
 
@@ -66,6 +66,6 @@ def multi_class_test():
 
     
 if __name__ == "__main__":
-    xor_test()
+    #xor_test()
     #poly_test()
-    #multi_class_test()
+    multi_class_test()
