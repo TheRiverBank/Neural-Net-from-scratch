@@ -103,7 +103,6 @@ def plot_xor_boundaries(model, X):
     
     plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
     plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
-    plt.show()
     plt.savefig("xor.png")
 
 
@@ -130,8 +129,6 @@ def plot_poly_boundaries(model, X, N):
 
     plt.scatter(X[0:N*4, 0], X[0:N*4, 1], c='r')
     plt.scatter(X[N*4:, 0], X[N*4:, 1], c='b')
-
-    plt.show()
     plt.savefig("two_class.png")
 
 
@@ -160,5 +157,4 @@ def plot_multi_class_boundaries(model, X, N, n_classes):
 
     for i in range(n_classes):
         plt.scatter(X[N*i:N*i+N, 0], X[N*i:N*i+N, 1], c=colors[i])
-    plt.show()
     plt.savefig("multi_class.png")

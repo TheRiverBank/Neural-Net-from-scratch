@@ -66,6 +66,6 @@ def multi_class_test():
 
     
 if __name__ == "__main__":
-    xor_test()
-    poly_test()
+    #xor_test()
+    #poly_test()
     multi_class_test()
