@@ -1,4 +1,3 @@
-
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -68,8 +67,7 @@ def get_multi_class_data(n_classes, N):
 
     X = np.c_[X, np.ones(len(X))]
     Y = np.c_[Y, np.ones(len(Y))]
-    #print(Y)
-    #quit()
+
     return X, Y
 
 
@@ -82,6 +80,7 @@ def get_test_data(N):
 
 
 def plot_xor_boundaries(model, X):
+    plt.clf()
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
     # define the x and y scale
@@ -103,10 +102,9 @@ def plot_xor_boundaries(model, X):
     
     plt.scatter(X[:len(X)//2, 0], X[:len(X)//2, 1], c='b')
     plt.scatter(X[len(X)//2:, 0], X[len(X)//2:, 1], c='r')
-    plt.savefig("xor.png")
+    plt.savefig("XOR.png")
 
 
-from matplotlib.pyplot import cm
 def plot_poly_boundaries(model, X, N):
     min1, max1 = X[:, 0].min() - 1, X[:, 0].max() + 1
     min2, max2 = X[:, 1].min() - 1, X[:, 1].max() + 1
