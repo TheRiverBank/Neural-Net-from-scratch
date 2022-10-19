@@ -82,14 +82,24 @@ class MultilayerPerceptronClassifier():
        
         self.layers = []
     
-    def predict(self, X):
+    def predict(self, X, flat=False):
+        """
+        :param X: numpy ndarray
+        :param flat: bool, returns class labels if true or 0/1 matrix of dim num classes if false.
+        """
         self.layers[0].output = X
         for r, layer in enumerate(self.layers[1:]):
             self.layers[r+1].forward_pass(self.layers[r].output)
-            
-        preds = np.round(self.layers[-1].output)
         
-        #preds = np.argmax(self.layers[-1].output[:, :-1], axis=1)
+        out = self.layers[-1].output[:, :-1]
+        preds = np.zeros_like(out)
+        preds[np.arange(len(out)), out.argmax(1)] = 1
+       
+        #print(self.layers[-1].output[:, :-1])
+        class_labels = np.argmax(self.layers[-1].output[:, :-1], axis=1)
+        
+        if flat:
+            return class_labels
         return preds
 
     def train(self, a, lr, epochs=1000):
@@ -99,9 +109,6 @@ class MultilayerPerceptronClassifier():
             print(f"Epoch:{e}\tCost: {cost:.4f}")
             self.back_propagation()
             self.update_weights(a, lr)
-
-        for layer in self.layers[1:]:
-            print(layer.weights) 
 
     def forward_pass(self):
         for r, layer in enumerate(self.layers[1:]):
@@ -141,34 +148,4 @@ class MultilayerPerceptronClassifier():
             w = np.random.normal(0, 0.5, self.layers[-1].n_neurons*n_neurons + n_neurons).reshape(n_neurons, self.layers[-1].n_neurons + 1)
             l = Layer(weights=w, n_neurons=n_neurons)
         self.layers.append(l)
-
-if __name__ == "__main__":
-    #X, y = get_test_data(100)
-    N = 100
-    X, y = get_XOR_data(N)
-    #X, y = get_multi_class_data(3, N)
-    # net_input_layer = Layer(
-    #         weights=None,
-    #         n_neurons=2, net_input=X, first_layer=True)
-    # hidden_layer = Layer(
-    #     weights=np.array([[0.2, 0.5, 1.5], [0.1, 0.2, 0.3]]),
-    #     n_neurons=2)
-    # output_layer = Layer(
-    #     weights=np.array([[0.6, -0.2, 0.4]]),
-    #     n_neurons=1, last_layer=True)
-
-    mlp = MultilayerPerceptronClassifier(X, y, net_shape=(2, 30, 1))
-    mlp.add_layer(2)
-    #mlp.add_layer(10)
-    mlp.add_layer(30)
-    mlp.add_layer(1)
-    for i in mlp.layers[1:]:
-        print(i.weights)
-    mlp.train(a=0.5, lr=0.01, epochs=10000)
-
-    predictions = mlp.predict(X)
-    for i in predictions:
-        print(i)
-    print("Accuracy:", np.sum(y[:,0]==predictions[:, 0])/len(y))
-    #plot_boundaries(mlp, X)
-    plot_poly_boundaries(mlp, X, N)
+        print(l.weights)
